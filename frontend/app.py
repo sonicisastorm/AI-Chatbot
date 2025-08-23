@@ -4,25 +4,28 @@ from uuid import uuid4
 
 st.set_page_config(page_title="Claude Sonnet RAG Chatbot", page_icon="🤖")
 
-# Session state setup 
+# Session state setup
 if "chats" not in st.session_state:
     st.session_state.chats = {}  # {chat_id: {"name": str, "messages": list}}
 if "current_chat" not in st.session_state:
     st.session_state.current_chat = None
 
 
-# Sidebar: Chat Manager 
+# Sidebar: Chat Manager
 st.sidebar.title("💬 Chat Sessions")
 
 # Create a new chat
 if st.sidebar.button("➕ New Chat"):
     chat_id = str(uuid4())[:8]  # short random id
-    st.session_state.chats[chat_id] = {"name": f"Chat {len(st.session_state.chats)+1}", "messages": []}
+    st.session_state.chats[chat_id] = {
+        "name": f"Chat {len(st.session_state.chats)+1}",
+        "messages": [],
+    }
     st.session_state.current_chat = chat_id
 
 # List existing chats
 for chat_id, chat in list(st.session_state.chats.items()):
-    col1, col2 = st.sidebar.columns([3,1])
+    col1, col2 = st.sidebar.columns([3, 1])
     if col1.button(chat["name"], key=f"select_{chat_id}"):
         st.session_state.current_chat = chat_id
     if col2.button("🗑️", key=f"delete_{chat_id}"):
@@ -44,9 +47,7 @@ else:
     if st.button("Send") and query:
         with st.spinner("Thinking..."):
             response = requests.post(
-                "http://backend:8000/chat",
-                json={"query": query},
-                stream=True
+                "http://backend:8000/chat", json={"query": query}, stream=True
             )
 
             collected = ""

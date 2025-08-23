@@ -5,6 +5,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import boto3
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,15 +17,20 @@ app = FastAPI()
 # Allow frontend connection
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Bedrock client
+# Clients
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
+    region_name=os.getenv("AWS_REGION", "us-east-1")
+)
+
+bedrock_agent_client = boto3.client(
+    service_name="bedrock-agent-runtime",
     region_name=os.getenv("AWS_REGION", "us-east-1")
 )
 
@@ -32,23 +40,22 @@ async def chat(request: Request):
     query = body.get("query", "")
 
     try:
-    
-        knowledge_base_response = bedrock_client.retrieve(
-            knowledgeBaseId="JGMPKF6VEI",  # Knowledge Base ID
+        # Query the Knowledge Base
+        knowledge_base_response = bedrock_agent_client.retrieve(
+            knowledgeBaseId="JGMPKF6VEI",  
             retrievalQuery={"text": query},
             retrievalConfiguration={
                 "vectorSearchConfiguration": {"numberOfResults": 3}
             }
         )
 
-        # Extract context text
+        # Extract context from retrieved docs
         context = "\n".join(
-            [item["content"]["text"] for item in knowledge_base_response["retrievalResults"]]
+            [item["content"]["text"] for item in knowledge_base_response.get("retrievalResults", [])]
         )
 
-        # Call Claude Sonnet 4 with retrieved context
         response = bedrock_client.invoke_model_with_response_stream(
-            modelId="anthropic.claude-sonnet-4-20250514-v1:0", 
+            modelId=os.getenv("MODEL_ID"), 
             body=json.dumps({
                 "anthropic_version": "bedrock-2023-05-31",
                 "max_tokens": 512,
@@ -56,9 +63,7 @@ async def chat(request: Request):
                 "messages": [
                     {
                         "role": "user",
-                        "content": [
-                            {"type": "text", "text": f"{context}\n{query}"}
-                        ]
+                        "content": [{"type": "text", "text": f"{context}\n{query}"}]
                     }
                 ]
             }),
@@ -66,7 +71,7 @@ async def chat(request: Request):
             accept="application/json"
         )
 
-        # Handle streaming response
+        # Stream back response
         stream_body = response.get("body")
 
         def event_generator():
