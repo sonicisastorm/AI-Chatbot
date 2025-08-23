@@ -23,7 +23,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Clients
 bedrock_client = boto3.client(
     service_name="bedrock-runtime",
     region_name=os.getenv("AWS_REGION", "us-east-1")
