@@ -99,6 +99,9 @@ docker-compose up --build -d
 ```
 # 📸 Screenshots
 Backend
-![frontend](https://github.com/sonicisastorm/AI-Chatbot/blob/main/backend/assets/FastAPI%20-%20Swagger%20UI.png)
+![backend](https://github.com/sonicisastorm/AI-Chatbot/blob/main/backend/assets/FastAPI%20-%20Swagger%20UI.png)
 Frontend
 ![frontend](https://github.com/sonicisastorm/AI-Chatbot/blob/main/frontend/assets/Claude%20Sonnet%20RAG%20Chatbot.png)
+EC2
+![EC2](https://github.com/sonicisastorm/AI-Chatbot/blob/main/workflows/docker-compose%20ps.png)
+
